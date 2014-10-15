@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+	<head>
+        <link rel="stylesheet" href="3rdparty/jquery-ui/themes/smoothness/jquery.ui.theme.css" />
+        <link rel="stylesheet" href="3rdparty/jquery-ui/themes/smoothness/jquery-ui.css" />
+        <link rel="stylesheet" href="//cdn.datatables.net/1.10.3/css/jquery.dataTables_themeroller.css" />
+        <link rel="stylesheet" href="//cdn.datatables.net/colvis/1.1.1/css/dataTables.colVis.css" />
+        <link rel="stylesheet" href="http://layout.jquery-dev.com/lib/css/layout-default-latest.css" />
+        <link rel="stylesheet" type="text/css" href="style.css" />
+
+        <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=false&libraries=geometry"></script>
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+        <script type="text/javascript" src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+        <script type="text/javascript" src="http://layout.jquery-dev.com/lib/js/jquery.layout-latest.js"></script> <!-- http://layout.jquery-dev.net -->
+        <script type="text/javascript" src="http://kincrew.github.com/xReader/xReader.full.js"></script> <!-- http://kincrew.github.io/xReader/ -->
+        <script type="text/javascript" src="3rdparty/FileSaver.js"></script>
+        <script type="text/javascript" src="3rdparty/markerwithlabel.js"></script> <!-- https://code.google.com/p/google-maps-utility-library-v3 -->
+        <script type="text/javascript" src="3rdparty/coolclock/excanvas.js"></script>
+        <script type="text/javascript" src="3rdparty/coolclock/coolclock.js"></script>
+        <script type="text/javascript" src="3rdparty/coolclock/moreskins.js"></script>
+
+        <script type="text/javascript" src="//cdn.datatables.net/1.10.3/js/jquery.dataTables.min.js"></script> <!-- These are to make the nice datatable -->
+        <script type="text/javascript" src="//cdn.datatables.net/colreorder/1.1.2/js/dataTables.colReorder.min.js"></script>        <!-- http://datatables.net/ -->
+        <script type="text/javascript" src="//cdn.datatables.net/colvis/1.1.1/js/dataTables.colVis.min.js"></script>
+
+        <script type="text/javascript" src="config.js"></script> <!-- Configuration of javascript -->
+        <! <script type="text/javascript" src="untrackedDeveloperSettings.js"></script> <!-- Developer override of config.js -->
+        <script type="text/javascript" src="planeObject.js"></script> <!-- Object about the plane -->
+        <script type="text/javascript" src="options.js"></script> <!-- WebGUI options -->
+        <script type="text/javascript" src="http://adsb.mindlesstux.com/dump1090/registration.js"></script> <!-- 3rd Party extra info lookup
+            Alt Srcs:	http://adsb.mindlesstux.com/dump1090/registration.js         -- USE THIS, this uses the CDN
+                        http://localhost:8080/dump1090/registration.js               -- Local testing only
+        -->
+        <script type="text/javascript" src="extension.js"></script> <!-- Easy hookin for addon? -->
+        <script type="text/javascript" src="script.js"></script> <!-- The meat of the javascript -->
+
+        <!--
+            The repo where you can find this code is: https://github.com/bdavenport/dump1090
+            I give thanks to MalcomRobb for his fork that this is based off of: https://github.com/MalcolmRobb/dump1090
+            Then thanks to antirez for whom started the dump1090 project and MalcomRobb who forked antirez: https://github.com/antirez/dump1090
+
+            Other known supporters are:
+                terrible: https://github.com/terribl
+        -->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-17136933-1', 'mindlesstux.com');
+  ga('send', 'pageview');
+
+</script>
+
+	</head>
+	<body onload="initialize()">
+        <div class="ui-layout-west">
+            <div id="accordion">
+                <h3>Marker Options</h3>
+                <div>
+                    <td>Show labels on map</td>
+                    <td>&nbsp;</td>
+                    <td><div id="labelShow">
+                        <input type="radio" id="labelShowOn" name="labelShow" onClick="LabelShow=true;">
+                        <label for="labelShowOn">On</label>
+                        <input type="radio" id="labelShowOff" name="labelShow" onClick="LabelShow=false;">
+                        <label for="labelShowOff">Off</label>
+                    </div></td>
+                    <p>
+                        <label for="amount">Flight Levels:</label>
+                        <input type="text" id="amount" style="border:0; color:#f6931f; font-weight:bold;">
+                    </p>
+                    <div id="slider-range"></div>
+                </div>
+                <h3>Antenna Coverage</h3>
+                <div>
+                    <table>
+                        <tr>
+                            <td>Show coverage on map</td>
+                            <td>&nbsp;</td>
+                            <td><div id="antennaShow">
+                                <input type="radio" id="antennaShowOn" name="antennaShow"
+                                       onClick="AntennaDataShow=true;drawAntennaData();">
+                                <label for="antennaShowOn">On</label>
+                                <input type="radio" id="antennaShowOff" name="antennaShow"
+                                       onClick="AntennaDataShow=false;drawAntennaData();">
+                                <label for="antennaShowOff">Off</label>
+                            </div></td>
+                        </tr>
+                        <tr><td>Collect coverage data</td>
+                            <td>&nbsp;</td>
+                            <td><div id="antennaCollect">
+                                <input type="radio" id="antennaCollectOn" name="antennaCollect"
+                                       onClick="AntennaDataCollect=true;">
+                                <label for="antennaCollectOn">On</label>
+                                <input type="radio" id="antennaCollectOff" name="antennaCollect"
+                                       onClick="AntennaDataCollect=false;">
+                                <label for="antennaCollectOff">Off</label>
+                            </div></td>
+                        </tr>
+                        <tr>
+                            <td>Coverage opacity</td>
+                            <td>&nbsp;</td>
+                            <td><div id="antennaShowOpacity"></div></td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                            <td>
+                                <button id="downloadBaseCoverage"
+                                        onClick="downloadBaseCoverage();">Download</button>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="ui-layout-center">
+            <div id="map_canvas"></div>
+        </div>
+        <div class="ui-layout-east">
+            <div class="ui-layout-north">
+                <div id="plane_detail"></div>
+                <div id="options"></div>
+            </div>
+            <div class="ui-layout-center">
+                <div id="planes_table"><table id="table_of_planes"></table></div>
+                <div id="plane_extension"></div>
+            </div>
+        </div>
+
+        <div id="SpecialSquawkWarning">
+            <b>Squak 7x00 is reported and shown.</b><br>
+            This is most likely an error in reciving or decoding.<br>
+            Please do not call the local authorities, they already know about it if it is valid squak.
+        </div>
+        <div id="METAR"></div>
+
+	</body>
+</html>
